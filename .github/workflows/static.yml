@@ -1,8 +1,8 @@
-name: Deploy static content to Pages
+name: Развертывание static контента на страницы Github'а
 
 on:  
   push:  
-    branches: ["master"]  
+    branches: ["main"]  
     paths:  
       - 'public/**'  
       - '.github/workflows/static.yml'  
@@ -30,7 +30,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
+      - name: Настройка Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -38,7 +38,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo "::group::Installing minification tools"
+          echo "::group::Установка инструментов для минификации"
           npm install -g html-minifier-terser clean-css-cli terser
           echo "::endgroup::"
 
@@ -50,7 +50,7 @@ jobs:
           echo "Total files: $(find public -type f | wc -l)"
           echo "::endgroup::"
 
-      - name: Minify HTML files
+      - name: Минификация HTML файлов
         run: |
           echo "::group::Minifying HTML files in public/"
           find public -name "*.html" -type f | while read file; do
@@ -74,9 +74,9 @@ jobs:
           done
           echo "::endgroup::"
 
-      - name: Minify CSS files
+      - name: Минификация CSS файлов
         run: |
-          echo "::group::Minifying CSS files in public/"
+          echo "::group::Минифицируем CSS файлы в public/"
           find public -name "*.css" -type f | while read file; do
             echo "Processing: $file"
             original_size=$(stat -c%s "$file")
@@ -89,7 +89,7 @@ jobs:
 
       - name: Minify JavaScript files
         run: |
-          echo "::group::Minifying JavaScript files in public/"
+          echo "::group::Минифицируем JavaScript файлы в public/"
           find public -name "*.js" -type f | while read file; do
             echo "Processing: $file"
             original_size=$(stat -c%s "$file")
@@ -100,30 +100,30 @@ jobs:
           done
           echo "::endgroup::"
 
-      - name: Generate build report
+      - name: Генерация репорта о сборке
         run: |
-          echo "::group::Build Summary"
+          echo "::group::Сводка"
           echo "## Build Report" >> $GITHUB_STEP_SUMMARY
-          echo "| File Type | Count | Total Size |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----------|-------|------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Тип файла | Кол-во | Общий размер |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|--------------|" >> $GITHUB_STEP_SUMMARY
 
           html_count=$(find public -name "*.html" | wc -l)
           html_size=$(find public -name "*.html" -exec stat -c%s {} + | awk '{sum+=$1} END {print sum}')
-          echo "| HTML | $html_count | ${html_size:-0} bytes |" >> $GITHUB_STEP_SUMMARY
+          echo "| HTML | $html_count | ${html_size:-0} байтов |" >> $GITHUB_STEP_SUMMARY
 
           css_count=$(find public -name "*.css" | wc -l)
           css_size=$(find public -name "*.css" -exec stat -c%s {} + | awk '{sum+=$1} END {print sum}')
-          echo "| CSS | $css_count | ${css_size:-0} bytes |" >> $GITHUB_STEP_SUMMARY
+          echo "| CSS | $css_count | ${css_size:-0} байтов |" >> $GITHUB_STEP_SUMMARY
 
           js_count=$(find public -name "*.js" | wc -l)
           js_size=$(find public -name "*.js" -exec stat -c%s {} + | awk '{sum+=$1} END {print sum}')
-          echo "| JavaScript | $js_count | ${js_size:-0} bytes |" >> $GITHUB_STEP_SUMMARY
+          echo "| JavaScript | $js_count | ${js_size:-0} байтов |" >> $GITHUB_STEP_SUMMARY
 
           total_files=$(find public -type f | wc -l)
           total_size=$(find public -type f -exec stat -c%s {} + | awk '{sum+=$1} END {print sum}')
-          echo "| **Total** | **$total_files** | **${total_size:-0} bytes** |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Всего** | **$total_files** | **${total_size:-0} байтов** |" >> $GITHUB_STEP_SUMMARY
 
-          echo "Build completed successfully with $total_files files totaling $total_size bytes"
+          echo "Билд успешно завершился с $total_files файлами общего размера в $total_size байтов"
           echo "::endgroup::"
 
       - name: Setup Pages
@@ -134,16 +134,16 @@ jobs:
         with:
           path: 'public/'
 
-      - name: Deploy to GitHub Pages
+      - name: Отправка на GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Deployment success notification
+      - name: УСПЕХ
         if: success()
         run: |
-          echo "::notice::Deployment successful! Site available at ${{ steps.deployment.outputs.page_url }}"
+          echo "::notice::Успех! Сайт доступен на ${{ steps.deployment.outputs.page_url }}"
 
-      - name: Deployment failure notification
+      - name: СБОЙ
         if: failure()
         run: |
-          echo "::error::Deployment failed. Check the logs above for details."
+          echo "::error::Столкнулись с ошибкой во время развертывания, детали в логах."
